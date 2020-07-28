@@ -20,6 +20,8 @@ func Serve(c *Conn) {
 		log.Printf("<< %s %v %s", command, args, c.dataPort.toAddress())
 
 		switch strings.ToUpper(command) {
+		case "PASV":
+			c.pasv(args)
 		case "OPTS":
 			c.opts(args)
 		case "PWD":
@@ -45,6 +47,11 @@ func Serve(c *Conn) {
 			// then the connection’s dataType is updated
 		default:
 			c.respond(status502)
+		}
+		// Cleanup PASV listeners if they go unused.
+		if command != "PASV" && c.pasvListener != nil {
+			c.pasvListener.Close()
+			c.pasvListener = nil
 		}
 	}
 	if s.Err() != nil {
