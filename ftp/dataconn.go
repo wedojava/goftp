@@ -39,7 +39,7 @@ func (d *dataPort) toAddress() string {
 
 // dataConnect is a simple wrapper for net.Dial, it establish connection, returns a struct satisfying the net.Conn interface(net.TCPConn), not the custom ftp.Conn.
 func (c *Conn) dataConnect() (net.Conn, error) {
-	conn, err := net.Dial("tcp", c.dataPort.toAddress())
+	conn, err := net.Dial("tcp4", c.dataPort.toAddress())
 	if err != nil {
 		return nil, err
 	}
