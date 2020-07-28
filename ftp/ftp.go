@@ -2,6 +2,7 @@ package ftp
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"strings"
 )
@@ -20,6 +21,8 @@ func Serve(c *Conn) {
 		log.Printf("<< %s %v %s", command, args, c.dataPort.toAddress())
 
 		switch command {
+		case "SYST": // cd
+			c.syst(args)
 		case "CWD": // cd
 			c.cwd(args)
 		case "LIST": //ls
@@ -44,4 +47,21 @@ func Serve(c *Conn) {
 	if s.Err() != nil {
 		log.Print(s.Err())
 	}
+}
+
+func (c *Conn) run() {
+	c.respond(status220)
+	s := bufio.NewScanner(c.conn)
+	var cmd string
+	var args []string
+	for s.Scan() {
+		if c.CmdErr != nil {
+			c.log(logPairs{"err": fmt.Errorf("command connection: %s", c.CmdErr())})
+			return
+		}
+	}
+}
+
+func (c *Conn) CmdErr() error {
+	return c.cmdErr
 }

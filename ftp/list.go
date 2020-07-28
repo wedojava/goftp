@@ -2,48 +2,67 @@ package ftp
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 )
 
 // The client-side ls path/to/file command reaches the server as LIST path/to/file, and it will come as no surprise that we have a (c *Conn) list handler function to match.
 func (c *Conn) list(args []string) {
-	var target string
+	target := filepath.Join(c.rootDir, c.workDir)
 	if len(args) > 0 {
-		target = filepath.Join(c.rootDir, c.workDir, args[0])
-	} else {
-		target = filepath.Join(c.rootDir, c.workDir)
+		target = filepath.Join(target, args[0])
 	}
-	files, err := ioutil.ReadDir(target)
+	f, err := os.Open(target)
 	if err != nil {
 		log.Print(err)
 		c.respond(status550)
 		return
 	}
 	c.respond(status150)
-	// When sending anything other than statuses, the server must establish a second, temporary connection to the client, known as the data connection, or dataConn.
-	// Moreover, the connection must be made to a specific port that the FTP client has selected in advance.
-	// How is this achieved? Before sending the LIST directive to the server, the client sends another command behind the scenes: PORT. PORT has a six-byte argument, corresponding to the four parts of an IP address, plus two bytes to represent a port number up to five digits long, e.g., PORT [127,0,0,1,245,1]. Be aware that your client may use subtly different formats but, if your server has proper logging, you’ll soon spot the difference.
-	dataConn, err := c.dataConnect()
+	w, err := c.dataConnect()
 	if err != nil {
 		log.Print(err)
 		c.respond(status425)
 		return
 	}
-	defer dataConn.Close()
-
-	for _, file := range files {
-		_, err := fmt.Fprint(dataConn, file.Name(), c.EOL())
+	defer w.Close()
+	stat, err := f.Stat()
+	if err != nil {
+		log.Print(err)
+		c.respond(status450)
+		return
+	}
+	if stat.IsDir() {
+		filenames, err := f.Readdirnames(0)
 		if err != nil {
 			log.Print(err)
-			c.respond(status426)
+			c.respond(status550)
+			return
 		}
+		for _, filename := range filenames {
+			_, err = fmt.Fprint(w, filename, c.EOL())
+			if err != nil {
+				log.Print(err)
+				c.respond(status426)
+				return
+			}
+		}
+		c.respond(status226)
+		return
 	}
-	_, err = fmt.Fprintf(dataConn, c.EOL())
+	rel, err := filepath.Rel(c.rootDir, target)
+	if err != nil {
+		log.Print(err)
+		c.respond(status550)
+		return
+	}
+	_, err = fmt.Fprint(w, rel, c.EOL())
 	if err != nil {
 		log.Print(err)
 		c.respond(status426)
+		return
 	}
 	c.respond(status226)
+	return
 }

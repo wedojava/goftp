@@ -31,8 +31,7 @@ func init() {
 }
 
 func main() {
-	server := fmt.Sprintf(":%d", port)
-	listener, err := net.Listen("tcp", server)
+	listener, err := net.Listen("tcp4", fmt.Sprintf(":%d", port))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -48,9 +47,9 @@ func main() {
 
 func handleConn(c net.Conn) {
 	defer c.Close()
-	absPath, err := filepath.Abs(root)
+	abs, err := filepath.Abs(root)
 	if err != nil {
 		log.Fatal(err)
 	}
-	ftp.Serve(ftp.NewConn(c, absPath))
+	ftp.Serve(ftp.NewConn(c, abs))
 }

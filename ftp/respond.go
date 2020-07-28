@@ -14,6 +14,7 @@ const (
 	status230 = "230 User %s logged in, proceed."
 	status425 = "425 Can't open data connection."
 	status426 = "426 Connection closed; transfer aborted."
+	status450 = "450 Requested file action not taken. File unavailable."
 	status501 = "501 Syntax error in parameters or arguments."
 	status502 = "502 Command not implemented."
 	status504 = "504 Cammand not implemented for that parameter."
