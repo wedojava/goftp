@@ -19,7 +19,7 @@ func Serve(c *Conn) {
 		// log.Printf("<< %s %v", command, args)
 		log.Printf("<< %s %v %s", command, args, c.dataPort.toAddress())
 
-		switch command {
+		switch strings.ToUpper(command) {
 		case "OPTS":
 			c.opts(args)
 		case "PWD":
