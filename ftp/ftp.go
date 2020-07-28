@@ -20,6 +20,10 @@ func Serve(c *Conn) {
 		log.Printf("<< %s %v %s", command, args, c.dataPort.toAddress())
 
 		switch command {
+		case "OPTS":
+			c.opts(args)
+		case "PWD":
+			c.pwd(args)
 		case "SYST":
 			c.syst(args)
 		case "CWD": // cd
